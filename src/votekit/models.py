@@ -4,12 +4,13 @@ from typing import Callable, Generic, Optional, TypeVar
 import pandas as pd
 
 from votekit.elections.election_state import ElectionState
-from votekit.pref_profile.pref_profile import PreferenceProfile
+from votekit.pref_profile.approval_profile import ApprovalProfile
+from votekit.pref_profile.pref_profile import RankProfile, ScoreProfile
 from votekit.utils import (
     score_dict_to_ranking,
 )
 
-P = TypeVar("P", bound=PreferenceProfile)
+P = TypeVar("P", RankProfile, ScoreProfile, ApprovalProfile)
 
 
 class Election(Generic[P]):
