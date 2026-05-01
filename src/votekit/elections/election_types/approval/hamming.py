@@ -12,7 +12,7 @@ class GeneralApproval(Election[ApprovalProfile]):
 
 
 def _hamming_score(profile: ApprovalProfile, weights: np.ndarray, committee: np.ndarray) -> float:
-    distances = (profile.votes != committee).sum(axis=1) * profile.weights
+    distances = (profile.votes != committee).sum(axis=1)  # * profile.weights
     distances = np.sort(distances)[::-1]
     return np.dot(distances, weights)
 
@@ -25,7 +25,7 @@ def _get_elected(
     best_committee = np.zeros(len(candidates))
 
     for mask in range((1 << (len(candidates))) - 1, -1, -1):
-        committee = np.ndarray([(mask >> i) & 1 for i in range(len(candidates))])
+        committee = np.array([(mask >> i) & 1 for i in range(len(candidates))])
         score = _hamming_score(profile=profile, weights=weights, committee=committee)
         if score < best_score:
             best_score = score
@@ -55,7 +55,7 @@ class OrderedWeightedHamming(GeneralApproval):
         weights: Union[Sequence[float] | str | tuple[str, int]] = "minisum",
     ):
         self.tiebreak = tiebreak
-        self.weights = _get_weights(weights, len(profile.df))
+        self.weights = _get_weights(weights, profile.votes.shape[0])
         super().__init__(profile=profile)
 
     def _is_finished(self):
@@ -67,13 +67,15 @@ class OrderedWeightedHamming(GeneralApproval):
     def _run_step(
         self, profile: ApprovalProfile, prev_state: ElectionState, store_states=False
     ) -> ApprovalProfile:
-        elected = _get_elected(profile, self.weights, self.tiebreak)
+        elected = set(
+            profile.candidates[i] for i in _get_elected(profile, self.weights, self.tiebreak)
+        )
 
         if store_states:
             new_state = ElectionState(
                 round_number=1,  # single shot election
                 elected=tuple(frozenset(elected)),
-                eliminated=set(profile.candidates) - elected,
+                eliminated=tuple(frozenset(set(profile.candidates) - elected)),
             )
 
             self.election_states.append(new_state)

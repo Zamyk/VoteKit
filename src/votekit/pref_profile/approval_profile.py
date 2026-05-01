@@ -29,7 +29,7 @@ class ApprovalProfile:
             ]
         )
         self.weights = np.array(ballot.weight for ballot in ballots)
-        self.candidates = candidates
+        self.candidates = list(candidates)
 
     @property
     def ballots(self) -> tuple[Ballot, ...]:
