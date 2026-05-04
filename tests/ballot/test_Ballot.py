@@ -77,5 +77,7 @@ def test_ballot_negative_weight():
 
 
 def test_rank_and_score():
-    with pytest.raises(TypeError, match="Only one of ranking or scores can be provided."):
+    with pytest.raises(
+        TypeError, match="Only one of approvals, ranking or scores can be provided."
+    ):
         Ballot(ranking=[{"A"}], scores={"A": 1})

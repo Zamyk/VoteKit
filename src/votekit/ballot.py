@@ -188,13 +188,14 @@ class RankBallot(Ballot):
     def __init__(
         self,
         *,
+        approvals: Iterable[str] | None = None,
         ranking: RankingLike = None,
         scores: Optional[dict[str, Union[int, float]]] = None,
         weight: Union[int, float] = 1.0,
         voter_set: Union[set[str], frozenset[str]] = frozenset(),
     ):
-        if scores is not None:  # todo_Zamyk
-            raise TypeError("Only one of ranking or scores can be provided.")
+        if approvals is not None or scores is not None:
+            raise TypeError("Only one of approvals, ranking or scores can be provided.")
         self._validate_ranking_candidates(ranking)
         self.ranking = self._strip_whitespace_ranking_candidates(ranking)
         super().__init__(weight=weight, voter_set=voter_set)
@@ -270,13 +271,14 @@ class ScoreBallot(Ballot):
     def __init__(
         self,
         *,
+        approvals: Iterable[str] | None = None,
         ranking: RankingLike = None,
         scores: Optional[dict[str, Union[int, float]]] = None,
         weight: Union[int, float] = 1.0,
         voter_set: Union[set[str], frozenset[str]] = frozenset(),
     ):
-        if ranking is not None:  # todo_Zamyk
-            raise TypeError("Only one of ranking or scores can be provided.")
+        if approvals is not None or ranking is not None:
+            raise TypeError("Only one of approvals, ranking or scores can be provided.")
         self._validate_scores_candidates(scores)
         self.scores = self._convert_scores_to_float_strip_whitespace(scores)
 
@@ -364,10 +366,10 @@ class ApprovalBallot(Ballot):
         voter_set: set[str] | frozenset[str] = frozenset(),
     ):
         if ranking is not None or scores is not None:
-            raise TypeError("ApprovalBallot only accepts approvals.")  # todo_Zamyk
+            raise TypeError("Only one of approvals, ranking or scores can be provided.")
 
         self._validate_approvals(approvals)
-        self.approvals = self._process_approvals(approvals)
+        self.approvals = self._strip_whitespace_approvals(approvals)
 
         super().__init__(weight=weight, voter_set=voter_set)
 
@@ -375,11 +377,16 @@ class ApprovalBallot(Ballot):
         if approvals is None:
             return
         if any(c == "~" for c in approvals):
-            raise ValueError("Candidate '~' is reserved and cannot be in approvals.")  # todo_Zamyk
+            raise ValueError(
+                f"Candidate '~' found in ballot approvals {approvals}."
+                " '~' is a reserved character and cannot be used for"
+                " candidate names."
+            )
 
-    def _process_approvals(self, approvals: Optional[Iterable[str]]) -> frozenset[str]:
+    def _strip_whitespace_approvals(self, approvals: Optional[Iterable[str]]) -> frozenset[str]:
         if approvals is None:
-            return frozenset()
+            return None
+
         return frozenset(c.strip() for c in approvals)
 
     def __eq__(self, other: object) -> bool:
@@ -394,9 +401,9 @@ class ApprovalBallot(Ballot):
         approval_str = "ApprovalBallot\n"
 
         if self.approvals:
-            approval_str += ", ".join(sorted(self.approvals))
+            approval_str += "\n".join(sorted(self.approvals))
 
-        approval_str += f"Weight: {self.weight}"
+        approval_str += f"\nWeight: {self.weight}"
         if self.voter_set != frozenset():
             approval_str += f"\nVoter set: {set(self.voter_set)}"
         return approval_str

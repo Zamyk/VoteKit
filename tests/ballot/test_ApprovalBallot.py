@@ -1,23 +1,22 @@
 import pytest
 
-from votekit.ballot import Ballot, RankBallot
+from votekit.ballot import ApprovalBallot, Ballot
 
 
 def test_ballot_init():
-    b = RankBallot()
-    assert isinstance(b, RankBallot)
-    assert b.ranking is None
+    b = ApprovalBallot()
+    assert isinstance(b, ApprovalBallot)
+    assert b.approvals is None
     assert b.weight == 1
     assert b.voter_set == frozenset()
 
 
 def test_init_from_parent_class():
-    b = Ballot(ranking=[{"A"}, {"B"}], voter_set={"Chris"}, weight=2)
-    assert isinstance(b, RankBallot)
+    b = Ballot(approvals={"A", "B"}, voter_set={"Chris"}, weight=2)
+    assert isinstance(b, ApprovalBallot)
 
-    assert isinstance(b.ranking, tuple)
-    assert isinstance(b.ranking[0], frozenset)
-    assert b.ranking == (frozenset({"A"}), frozenset({"B"}))
+    assert isinstance(b.approvals, frozenset)
+    assert b.approvals == frozenset({"A", "B"})
 
     assert isinstance(b.weight, float)
     assert b.weight == 2.0
@@ -25,13 +24,13 @@ def test_init_from_parent_class():
     assert isinstance(b.voter_set, frozenset)
     assert b.voter_set == frozenset({"Chris"})
 
-    assert b == RankBallot(ranking=[{"A"}, {"B"}], voter_set={"Chris"}, weight=2)
+    assert b == ApprovalBallot(approvals={"A", "B"}, voter_set={"Chris"}, weight=2)
 
 
 def test_ballot_is_frozen():
-    b = RankBallot()
+    b = ApprovalBallot()
     with pytest.raises(AttributeError, match="is frozen"):
-        b.ranking = (frozenset({"A"}),)
+        b.approvals = (frozenset({"A"}),)
     with pytest.raises(AttributeError, match="is frozen"):
         b.weight = 2
     with pytest.raises(AttributeError, match="is frozen"):
@@ -41,7 +40,7 @@ def test_ballot_is_frozen():
 
 
 def test_ballot_is_frozen_del():
-    b = RankBallot(ranking=[{"A"}], weight=2, voter_set={"A"})
+    b = ApprovalBallot(approvals={"A"}, weight=2, voter_set={"A"})
     with pytest.raises(AttributeError, match="is frozen"):
         del b.weight
     with pytest.raises(AttributeError, match="is frozen"):
@@ -49,13 +48,13 @@ def test_ballot_is_frozen_del():
     with pytest.raises(AttributeError, match="is frozen"):
         del b._frozen
     with pytest.raises(AttributeError, match="is frozen"):
-        del b.ranking
+        del b.approvals
 
 
 def test_ballot_hash():
-    b1 = RankBallot(ranking=[{"A"}], weight=2, voter_set={"A"})
-    b2 = RankBallot(ranking=[{"A"}], weight=2, voter_set={"A"})
-    b3 = RankBallot(ranking=[{"A"}], weight=1, voter_set={"B"})
+    b1 = ApprovalBallot(approvals={"A"}, weight=2, voter_set={"A"})
+    b2 = ApprovalBallot(approvals={"A"}, weight=2, voter_set={"A"})
+    b3 = ApprovalBallot(approvals={"A"}, weight=1, voter_set={"B"})
 
     assert b1 == b2 and hash(b1) == hash(b2)
     assert b1 != b3 and hash(b1) != hash(b3)
@@ -64,20 +63,14 @@ def test_ballot_hash():
 
 
 def test_ballot_coerce_wt_to_float():
-    assert isinstance(RankBallot(weight=3).weight, float)
-    assert isinstance(RankBallot(weight=3.2).weight, float)
+    assert isinstance(ApprovalBallot(weight=3).weight, float)
+    assert isinstance(ApprovalBallot(weight=3.2).weight, float)
 
 
 def test_ballot_strip_whitespace():
-    b = RankBallot(
-        ranking=(frozenset({" Chris", "Peter "}), frozenset({" Moon "}), frozenset()),
-    )
+    b = ApprovalBallot(approvals=frozenset({" Chris", "Peter "}))
 
-    assert b.ranking == (
-        frozenset({"Chris", "Peter"}),
-        frozenset({"Moon"}),
-        frozenset(),
-    )
+    assert b.approvals == frozenset({"Chris", "Peter"})
 
 
 def test_ballot_tilde_errors():
@@ -85,68 +78,68 @@ def test_ballot_tilde_errors():
         ValueError,
         match="'~' is a reserved character and cannot be used for candidate names.",
     ):
-        RankBallot(ranking=({"~"},))
+        ApprovalBallot(approvals={"~"})
 
 
 def test_ballot_negative_weight():
     with pytest.raises(ValueError, match="Ballot weight cannot be negative."):
-        RankBallot(weight=-1.5)
+        ApprovalBallot(weight=-1.5)
 
 
 def test_ballot_eq():
-    b = RankBallot(
-        ranking=[{"A"}, {"B"}, {"C"}],
+    b = ApprovalBallot(
+        approvals={"A", "B", "C"},
         weight=3,
         voter_set={"Chris", "peter"},
     )
 
-    assert b == RankBallot(
-        ranking=[{"A"}, {"B"}, {"C"}],
+    assert b == ApprovalBallot(
+        approvals={"A", "B", "C"},
         weight=3.0,
         voter_set={"peter", "Chris"},
     )
 
     assert b != "Hello"
 
-    assert b != RankBallot(
+    assert b != ApprovalBallot(
         weight=3,
         voter_set={"Chris", "peter"},
     )
 
-    assert b != RankBallot(
-        ranking=[{"A"}, {"B"}, {"C"}],
+    assert b != ApprovalBallot(
+        approvals={"A", "B", "C"},
         voter_set={"Chris", "peter"},
     )
 
-    assert b != RankBallot(
-        ranking=[{"A"}, {"B"}, {"C"}],
+    assert b != ApprovalBallot(
+        approvals={"A", "B", "C"},
         weight=3,
     )
 
-    assert b != RankBallot(
-        ranking=[{"B"}, {"A"}, {"C"}],
+    assert b != ApprovalBallot(
+        approvals={"A", "B", "C", "D"},
         weight=3,
         voter_set={"Chris", "peter"},
     )
 
 
 def test_ballot_str():
-    b = RankBallot(
-        ranking=[{"A"}, {"B"}, {"C"}],
+    b = ApprovalBallot(
+        approvals={"A", "B", "C"},
         weight=3,
         voter_set={"Chris"},
     )
 
-    assert str(b) == "RankBallot\n1.) A, \n2.) B, \n3.) C, \nWeight: 3.0\nVoter set: {'Chris'}"
+    assert str(b) == "ApprovalBallot\nA\nB\nC\nWeight: 3.0\nVoter set: {'Chris'}"
 
 
-def test_rank_sub_ballot():
-    assert isinstance(RankBallot(), Ballot)
-    assert isinstance(RankBallot(), RankBallot)
+def test_approval_sub_ballot():
+    assert isinstance(ApprovalBallot(), Ballot)
+    assert isinstance(ApprovalBallot(), ApprovalBallot)
 
 
-def test_rank_and_score():
+def test_approval_and_ranking():
     with pytest.raises(
         TypeError, match="Only one of approvals, ranking or scores can be provided."
     ):
-        RankBallot(ranking=[{"A"}], scores={"A": 1})
+        ApprovalBallot(approvals={"A"}, ranking=[{"A"}], scores={"A": 1})

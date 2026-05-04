@@ -140,5 +140,7 @@ def test_rank_sub_ballot():
 
 
 def test_rank_and_score():
-    with pytest.raises(TypeError, match="Only one of ranking or scores can be provided."):
+    with pytest.raises(
+        TypeError, match="Only one of approvals, ranking or scores can be provided."
+    ):
         ScoreBallot(ranking=[{"A"}], scores={"A": 1})
