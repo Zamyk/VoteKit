@@ -12,7 +12,7 @@ class GeneralApproval(Election[ApprovalProfile]):
 
 
 def _hamming_score(profile: ApprovalProfile, weights: np.ndarray, committee: np.ndarray) -> float:
-    distances = (profile.votes != committee).sum(axis=1) * profile.weights
+    distances = (profile.votes != committee).sum(axis=1)# * profile.weights
     distances = np.sort(distances)[::-1]
     return np.dot(distances, weights)
 
@@ -75,8 +75,8 @@ class OrderedWeightedHamming(GeneralApproval):
         if store_states:
             new_state = ElectionState(
                 round_number=1,  # single shot election
-                elected=tuple(frozenset(elected)),
-                eliminated=tuple(frozenset(set(profile.candidates) - elected)),
+                elected=tuple([frozenset(elected)]),
+                eliminated=tuple([frozenset(set(profile.candidates) - elected)]),
             )
 
             self.election_states.append(new_state)
