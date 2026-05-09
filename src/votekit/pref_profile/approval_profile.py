@@ -24,10 +24,11 @@ class ApprovalProfile:
     ):
         self.votes = np.array(
             [
-                [ballot.approvals and c in ballot.approvals for c in candidates]
+                [(ballot.approvals is not None and c in ballot.approvals) for c in candidates]
                 for ballot in cast(Sequence[ApprovalBallot], ballots)
             ]
         )
+
         self.weights = np.array([ballot.weight for ballot in ballots])
         self.candidates = list(candidates)
 
