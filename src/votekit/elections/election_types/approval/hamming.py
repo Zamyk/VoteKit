@@ -39,12 +39,15 @@ def _get_weights(weights, n):
         weights = ("f", 0)
     elif weights == "minimax":
         weights = ("f", n - 1)
+    elif weights == "Borda":
+        weights = [i / (n * (n + 1) / 2) for i in range(n, 0, -1)]
 
     if isinstance(weights, tuple) and weights[0] == "f":
         i = weights[1]
-        return [1.0 / (n - i)] * (n - i) + [0.0] * i
+        assert i < n and i >= 0
+        return np.array([1.0 / (n - i)] * (n - i) + [0.0] * i)
 
-    return np.ndarray(weights)
+    return np.array(weights)
 
 
 class OrderedWeightedHamming(GeneralApproval):
