@@ -24,9 +24,8 @@ class ApprovalProfile:
     ):
         self.votes = np.array(
             [
-                [c in ballot.approvals for c in candidates]
+                [ballot.approvals and c in ballot.approvals for c in candidates]
                 for ballot in cast(Sequence[ApprovalBallot], ballots)
-                if ballot.approvals
             ]
         )
         self.weights = np.array([ballot.weight for ballot in ballots])
