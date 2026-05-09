@@ -83,7 +83,7 @@ class Ballot:
     def __new__(
         cls,
         *,
-        approvals: None = None,
+        approvals: Optional[Iterable[str]] = None,
         ranking: Optional[Sequence[Iterable[str]]] = None,
         scores: Optional[dict[str, Union[int, float]]] = None,
         weight: Union[float, int] = 1.0,
@@ -383,7 +383,9 @@ class ApprovalBallot(Ballot):
                 " candidate names."
             )
 
-    def _strip_whitespace_approvals(self, approvals: Optional[Iterable[str]]) -> frozenset[str]:
+    def _strip_whitespace_approvals(
+        self, approvals: Optional[Iterable[str]]
+    ) -> frozenset[str] | None:
         if approvals is None:
             return None
 
