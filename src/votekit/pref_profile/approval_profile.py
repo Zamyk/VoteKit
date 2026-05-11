@@ -22,15 +22,26 @@ class ApprovalProfile:
         ballots: Sequence[Ballot] = tuple(),
         candidates: Sequence[str] = tuple(),
     ):
+        self.candidates = tuple(candidates)
+        self.candidates_cast = tuple(
+            {
+                candidate
+                for ballot in cast(Sequence[ApprovalBallot], ballots)
+                for candidate in (ballot.approvals or ())
+            }
+        )
+
+        if self.candidates == tuple():
+            self.candidates = self.candidates_cast
+
         self.votes = np.array(
             [
-                [(ballot.approvals is not None and c in ballot.approvals) for c in candidates]
+                [(ballot.approvals is not None and c in ballot.approvals) for c in self.candidates]
                 for ballot in cast(Sequence[ApprovalBallot], ballots)
             ]
         )
 
         self.weights = np.array([ballot.weight for ballot in ballots])
-        self.candidates = list(candidates)
 
     @property
     def ballots(self) -> tuple[Ballot, ...]:
