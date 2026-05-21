@@ -11,7 +11,7 @@ from typing import Optional, Sequence
 import numpy as np
 import pandas as pd
 
-from votekit.ballot import Ballot, RankBallot, ScoreBallot
+from votekit.ballot import ApprovalBallot, Ballot, RankBallot, ScoreBallot
 
 
 def _convert_ranking_cols_to_ranking(
@@ -93,6 +93,28 @@ def convert_row_to_score_ballot(row: pd.Series, candidates: tuple[str, ...]) -> 
 
     return ScoreBallot(
         scores=scores if scores != dict() else None,
+        weight=weight,
+        voter_set=voter_set,
+    )
+
+
+def convert_row_to_approval_ballot(row: pd.Series, candidates: tuple[str, ...]) -> ApprovalBallot:
+    """
+    Convert a row of a properly formatted profile.df to a Ballot.
+
+    Args:
+        row (pd.Series): Row of a profile.df.
+        candidates (tuple[str,...]): The name of the candidates.
+
+    Returns:
+        ApprovalBallot: Ballot corresponding to the row of the df.
+    """
+    approvals = {c for c in candidates if c in row and row[c]}
+    voter_set = row["Voter Set"]
+    weight = row["Weight"]
+
+    return ApprovalBallot(
+        approvals=approvals if approvals != set() else None,
         weight=weight,
         voter_set=voter_set,
     )
