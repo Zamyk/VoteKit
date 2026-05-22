@@ -40,6 +40,3 @@ def test_add_profiles():
     assert set(summed_profile.candidates) == set(["A", "B", "C", "D", "E", "F"])
     assert isinstance(summed_profile, ApprovalProfile)
     assert true_summed_profile == summed_profile
-
-
-test_add_profiles()

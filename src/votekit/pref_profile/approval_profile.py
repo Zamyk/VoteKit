@@ -21,7 +21,8 @@ class ApprovalProfile:
     you want to edit the ballots, candidates, etc.
 
     Args:
-        ballots (Sequence[ApprovalBallot], optional): Tuple of ``Ballot`` objects. Defaults to empty tuple.
+        ballots (Sequence[ApprovalBallot], optional): Tuple of ``Ballot`` objects.
+        Defaults to empty tuple.
         candidates (tuple[str], optional): Tuple of candidate strings. Defaults to empty tuple.
             If empty, computes this from any candidate listed on a ballot.
 
@@ -58,7 +59,7 @@ class ApprovalProfile:
         votes: np.ndarray | None = None,
         weights: np.ndarray | None = None,
         voter_sets: np.ndarray | None = None,
-    ):        
+    ):
         if votes is None:
             self.candidates = tuple(candidates)
             self.candidates_cast = tuple(
@@ -76,7 +77,10 @@ class ApprovalProfile:
 
             self.votes = np.array(
                 [
-                    [(ballot.approvals is not None and c in ballot.approvals) for c in self.candidates]
+                    [
+                        (ballot.approvals is not None and c in ballot.approvals)
+                        for c in self.candidates
+                    ]
                     for ballot in cast(Sequence[ApprovalBallot], ballots)
                 ]
             ).reshape(len(ballots), len(self.candidates))
@@ -84,8 +88,12 @@ class ApprovalProfile:
             self.weights = np.array([ballot.weight for ballot in ballots])
             self.voter_sets = np.array([ballot.voter_set for ballot in ballots])
         else:
+            if weights is None or voter_sets is None:
+                raise ProfileError(
+                    "Passing votes requirse also passing weights and voter sets."
+                )  # TODO_ZAMYK
             self.candidates = tuple(candidates)
-            self.candidates_cast = self.candidates            
+            self.candidates_cast = self.candidates
             self.votes = votes.copy()
             self.weights = weights.copy()
             self.voter_sets = voter_sets.copy()
@@ -164,7 +172,26 @@ class ApprovalProfile:
 
     def group_ballots(self) -> ApprovalProfile:
         """Groups identical ballots and sums their weights."""
-        raise NotImplementedError
+        df = self.df.reset_index(drop=True).copy()
+        vote_cols = list(self.candidates)
+
+        non_group_cols = ["Weight", "Voter Set"]
+        cand_cols = [c for c in self.df.columns if c not in non_group_cols]
+        group_df = df.groupby(cand_cols, dropna=False)
+        new_df = group_df.aggregate(
+            {
+                "Weight": "sum",
+                "Voter Set": (lambda sets: set().union(*sets)),
+            }
+        ).reset_index()
+
+        votes = new_df[vote_cols].to_numpy(dtype=bool)
+        weights = new_df["Weight"].to_numpy(dtype=float)
+        voter_sets = new_df["Voter Set"].to_numpy(dtype=object)
+
+        return ApprovalProfile(
+            candidates=self.candidates, votes=votes, weights=weights, voter_sets=voter_sets
+        )
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, ApprovalProfile):
@@ -191,7 +218,9 @@ class ApprovalProfile:
     def __add__(self, other: ApprovalProfile) -> ApprovalProfile:
         """Combines two profiles into a new one."""
 
-        candidates = self.candidates + tuple([c for c in other.candidates if c not in self.candidates])
+        candidates = self.candidates + tuple(
+            [c for c in other.candidates if c not in self.candidates]
+        )
 
         candidate_index_1 = {candidate: i for i, candidate in enumerate(self.candidates)}
         candidate_index_2 = {candidate: i for i, candidate in enumerate(other.candidates)}
@@ -203,15 +232,16 @@ class ApprovalProfile:
             if candidate in self.candidates:
                 votes_1[:, index] = self.votes[:, candidate_index_1[candidate]]
 
-            if candidates in other.candidates:
+            if candidate in other.candidates:
                 votes_2[:, index] = other.votes[:, candidate_index_2[candidate]]
 
-
         votes = np.vstack([votes_1, votes_2])
-        voter_sets = np.vstack([self.voter_sets, other.voter_sets])
-        weights = np.vstack([self.weights, other.weights])
+        voter_sets = np.concatenate((self.voter_sets, other.voter_sets))
+        weights = np.concatenate((self.weights, other.weights))
 
-        return ApprovalProfile(candidates=candidates, votes=votes, voter_sets=voter_sets, weights=weights)
+        return ApprovalProfile(
+            candidates=candidates, votes=votes, voter_sets=voter_sets, weights=weights
+        )
 
     def __str__(self) -> str:
         repr_str = "ApprovalProfile\n"

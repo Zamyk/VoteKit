@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 
 from votekit.ballot import ApprovalBallot
@@ -27,7 +26,6 @@ def test_pp_df_approval():
     }
     true_df = pd.DataFrame(data)
     true_df.index.name = "Ballot Index"
-    df = pp.df
     assert pp.df.equals(true_df)
 
 

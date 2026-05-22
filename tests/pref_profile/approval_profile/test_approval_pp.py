@@ -1,7 +1,7 @@
 import pytest
 
 from votekit.ballot import ApprovalBallot
-from votekit.pref_profile.approval_profile import ApprovalProfile
+from votekit.pref_profile.approval_profile import ApprovalProfile, ProfileError
 
 
 def test_init():
@@ -14,7 +14,7 @@ def test_init():
 
 
 def test_unique_cands_validator():
-    with pytest.raises(ValueError, match="All candidates must be unique."):
+    with pytest.raises(ProfileError, match="All candidates must be unique."):
         ApprovalProfile(candidates=("A", "A", "B"))
 
     ApprovalProfile(candidates=("A", "B"))
@@ -79,3 +79,6 @@ def test_get_candidates_received_votes():
         "B",
         "C",
     }
+
+
+test_unique_cands_validator()

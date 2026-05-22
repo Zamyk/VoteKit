@@ -1,6 +1,3 @@
-import csv
-import io
-
 import pytest
 
 from votekit.ballot import ApprovalBallot
