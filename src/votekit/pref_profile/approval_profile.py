@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import os
 import pickle
+import urllib
 from functools import cached_property
 from os import PathLike
 from pathlib import Path
 from typing import Sequence, cast
-
-import urllib
 
 import numpy as np
 import pandas as pd
@@ -85,14 +84,12 @@ class ApprovalProfile:
                     "Cannot pass votes and a ballot list to profile init method. Must pick one."
                 )
             if weights is None or voter_sets is None:
-                raise ProfileError(
-                    "Passing votes requires also passing weights and voter sets."
-                )
+                raise ProfileError("Passing votes requires also passing weights and voter sets.")
             self.candidates = tuple(candidates)
             self.candidates_cast = self.candidates
-            self.votes = votes.copy() # to copy or not to copy? TODO_MATEUSZ
-            self.weights = weights.copy() # to copy or not to copy? TODO_MATEUSZ
-            self.voter_sets = voter_sets.copy() # to copy or not to copy? TODO_MATEUSZ
+            self.votes = votes.copy()  # to copy or not to copy? TODO_MATEUSZ
+            self.weights = weights.copy()  # to copy or not to copy? TODO_MATEUSZ
+            self.voter_sets = voter_sets.copy()  # to copy or not to copy? TODO_MATEUSZ
 
             if self.votes.shape[1] != len(candidates):
                 raise ProfileError("Candidates must match votes.")
