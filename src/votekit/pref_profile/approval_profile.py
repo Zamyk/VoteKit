@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import os
 import pickle
 from functools import cached_property
 from os import PathLike
 from pathlib import Path
 from typing import Sequence, cast
+
+import urllib
 
 import numpy as np
 import pandas as pd
@@ -36,11 +39,6 @@ class ApprovalProfile:
 
     Raises:
         ProfileError: a data frame and ballot list are passed to the init method.
-        ProfileError: contains_rankings is set to False but a ballot contains a ranking.
-        ProfileError: contains_rankings is set to True but no ballot contains a ranking.
-        ProfileError: contains_scores is set to False but a ballot contains a score.
-        ProfileError: contains_scores is set to True but no ballot contains a score.
-        ProfileError: max_ranking_length is set but a ballot ranking excedes the length.
         ProfileError: a candidate is found on a ballot that is not listed on a provided
             candidate list.
         ProfileError: candidates must be unique.
@@ -82,15 +80,19 @@ class ApprovalProfile:
             self.weights = np.array([ballot.weight for ballot in ballots])
             self.voter_sets = np.array([ballot.voter_set for ballot in ballots])
         else:
+            if ballots is not None:
+                raise ProfileError(
+                    "Cannot pass votes and a ballot list to profile init method. Must pick one."
+                )
             if weights is None or voter_sets is None:
                 raise ProfileError(
-                    "Passing votes requirse also passing weights and voter sets."
-                )  # TODO_ZAMYK
+                    "Passing votes requires also passing weights and voter sets."
+                )
             self.candidates = tuple(candidates)
             self.candidates_cast = self.candidates
-            self.votes = votes.copy()
-            self.weights = weights.copy()
-            self.voter_sets = voter_sets.copy()
+            self.votes = votes.copy() # to copy or not to copy? TODO_MATEUSZ
+            self.weights = weights.copy() # to copy or not to copy? TODO_MATEUSZ
+            self.voter_sets = voter_sets.copy() # to copy or not to copy? TODO_MATEUSZ
 
             if self.votes.shape[1] != len(candidates):
                 raise ProfileError("Candidates must match votes.")
@@ -281,5 +283,12 @@ class ApprovalProfile:
     @classmethod
     def from_pickle(cls, fpath: str | PathLike | Path) -> ApprovalProfile:
         """Loads an ApprovalProfile from a pickle file."""
-        with open(str(fpath), "rb") as f:
-            return pickle.load(f)
+        fpath = str(fpath)
+        if not os.path.isfile(fpath):
+            with urllib.request.urlopen(fpath) as response:
+                data = pickle.loads(response.read())
+        else:
+            with open(str(fpath), "rb") as f:
+                data = pickle.load(f)
+        assert isinstance(data, ApprovalProfile)
+        return data

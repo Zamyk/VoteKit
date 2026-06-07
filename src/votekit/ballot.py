@@ -360,7 +360,7 @@ class ApprovalBallot(Ballot):
         self,
         *,
         approvals: Optional[Iterable[str]] = None,
-        ranking: Optional[RankingLike] = None,
+        ranking: RankingLike = None,
         scores: Optional[dict[str, Union[int, float]]] = None,
         weight: float | int = 1.0,
         voter_set: set[str] | frozenset[str] = frozenset(),
@@ -368,22 +368,22 @@ class ApprovalBallot(Ballot):
         if ranking is not None or scores is not None:
             raise TypeError("Only one of approvals, ranking or scores can be provided.")
 
-        self._validate_approvals(approvals)
-        self.approvals = self._strip_whitespace_approvals(approvals)
+        self._validate_approval_candidates(approvals)
+        self.approvals = self._strip_whitespace_approval_candidates(approvals)
 
         super().__init__(weight=weight, voter_set=voter_set)
 
-    def _validate_approvals(self, approvals: Optional[Iterable[str]]) -> None:
+    def _validate_approval_candidates(self, approvals: Optional[Iterable[str]]) -> None:
         if approvals is None:
             return
-        if any(c == "~" for c in approvals):
+        if "~" in approvals:
             raise ValueError(
                 f"Candidate '~' found in ballot approvals {approvals}."
                 " '~' is a reserved character and cannot be used for"
                 " candidate names."
             )
 
-    def _strip_whitespace_approvals(
+    def _strip_whitespace_approval_candidates(
         self, approvals: Optional[Iterable[str]]
     ) -> frozenset[str] | None:
         if approvals is None:
