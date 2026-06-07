@@ -72,14 +72,14 @@ class ApprovalProfile:
                         (ballot.approvals is not None and c in ballot.approvals)
                         for c in self.candidates
                     ]
-                    for ballot in cast(Sequence[ApprovalBallot], ballots)
+                    for ballot in ballots
                 ]
             ).reshape(len(ballots), len(self.candidates))
 
             self.weights = np.array([ballot.weight for ballot in ballots])
             self.voter_sets = np.array([ballot.voter_set for ballot in ballots])
         else:
-            if ballots is not None:
+            if ballots != ():
                 raise ProfileError(
                     "Cannot pass votes and a ballot list to profile init method. Must pick one."
                 )

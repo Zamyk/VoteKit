@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from numbers import Real
-from typing import Iterable, Optional, Sequence, TypeAlias, Union, overload
+from typing import Iterable, Sequence, TypeAlias, overload
 
-Ranking: TypeAlias = Optional[tuple[frozenset[str], ...]]
-RankingLike: TypeAlias = Optional[Sequence[Iterable[str]]]
+Ranking: TypeAlias = tuple[frozenset[str], ...] | None
+RankingLike: TypeAlias = Sequence[Iterable[str]] | None
 
 
 class Ballot:
@@ -15,11 +15,11 @@ class Ballot:
         ranking (Optional[Sequence[Iterable[str]]]): Candidate ranking. Entry i of the
             sequence is an iterable of candidates ranked in position i. Defaults to None.
             Will be coerced to tuple[frozenset[str], ...].
-        weight (Union[float, int]): Weight assigned to a given ballot. Defaults to 1.0
+        weight (float | int): Weight assigned to a given ballot. Defaults to 1.0
             Can be input as int or float, and will be coerced to float.
-        voter_set (Union[set[str], frozenset[str]]): Set of voters who cast the ballot.
+        voter_set (set[str] | frozenset[str]): Set of voters who cast the ballot.
             Defaults to frozenset(). Will be coerced to frozenset.
-        scores (Optional[dict[str, Union[int, float]]): Scores for individual candidates.
+        scores (dict[str, int | float] | None): Scores for individual candidates.
             Defaults to None. Values can be input as int or float but will be coerced to float.
             Only retains non-zero scores.
 
@@ -53,8 +53,8 @@ class Ballot:
         approvals: Iterable[str],
         ranking: None = None,
         scores: None = None,
-        weight: Union[float, int] = 1.0,
-        voter_set: Union[set[str], frozenset[str]] = frozenset(),
+        weight: float | int = 1.0,
+        voter_set: set[str] | frozenset[str] = frozenset(),
     ) -> ApprovalBallot: ...
 
     @overload
@@ -64,8 +64,8 @@ class Ballot:
         approvals: None = None,
         ranking: Sequence[Iterable[str]],
         scores: None = None,
-        weight: Union[float, int] = 1.0,
-        voter_set: Union[set[str], frozenset[str]] = frozenset(),
+        weight: float | int = 1.0,
+        voter_set: set[str] | frozenset[str] = frozenset(),
     ) -> RankBallot: ...
 
     @overload
@@ -74,30 +74,30 @@ class Ballot:
         *,
         approvals: None = None,
         ranking: None = None,
-        scores: dict[str, Union[int, float]],
-        weight: Union[float, int] = 1.0,
-        voter_set: Union[set[str], frozenset[str]] = frozenset(),
+        scores: dict[str, int | float],
+        weight: float | int = 1.0,
+        voter_set: set[str] | frozenset[str] = frozenset(),
     ) -> ScoreBallot: ...
 
     @overload
     def __new__(
         cls,
         *,
-        approvals: Optional[Iterable[str]] = None,
-        ranking: Optional[Sequence[Iterable[str]]] = None,
-        scores: Optional[dict[str, Union[int, float]]] = None,
-        weight: Union[float, int] = 1.0,
-        voter_set: Union[set[str], frozenset[str]] = frozenset(),
+        approvals: Iterable[str] | None = None,
+        ranking: Sequence[Iterable[str]] | None = None,
+        scores: dict[str, int | float] | None = None,
+        weight: float | int = 1.0,
+        voter_set: set[str] | frozenset[str] = frozenset(),
     ) -> Ballot: ...
 
     def __new__(
         cls,
         *,
-        approvals: Optional[Iterable[str]] = None,
-        ranking: Optional[Sequence[Iterable[str]]] = None,
-        scores: Optional[dict[str, Union[int, float]]] = None,
-        weight: Union[float, int] = 1.0,
-        voter_set: Union[set[str], frozenset[str]] = frozenset(),
+        approvals: Iterable[str] | None = None,
+        ranking: Sequence[Iterable[str]] | None = None,
+        scores: dict[str, int | float] | None = None,
+        weight: float | int = 1.0,
+        voter_set: set[str] | frozenset[str] = frozenset(),
     ):
         if sum(x is not None for x in [approvals, ranking, scores]) > 1:
             raise TypeError("Only one of approvals, ranking or scores can be provided.")
@@ -113,11 +113,11 @@ class Ballot:
     def __init__(
         self,
         *,
-        approvals: Optional[Iterable[str]] = None,
-        ranking: Optional[Sequence[Iterable[str]]] = None,
-        scores: Optional[dict[str, Union[int, float]]] = None,
-        weight: Union[float, int] = 1.0,
-        voter_set: Union[set[str], frozenset[str]] = frozenset(),
+        approvals: Iterable[str] | None = None,
+        ranking: Sequence[Iterable[str]] | None = None,
+        scores: dict[str, int | float] | None = None,
+        weight: float | int = 1.0,
+        voter_set: set[str] | frozenset[str] = frozenset(),
     ):
         self.voter_set = frozenset(voter_set) if not isinstance(voter_set, frozenset) else voter_set
 
@@ -171,8 +171,8 @@ class RankBallot(Ballot):
 
     Args:
         ranking (RankingLike): Ranking of candidates, defaults to None.
-        weight (Union[int, float]): Weight of the ballot, defaults to 1.0.
-        voter_set (Union[set[str], frozenset[str]]): Voter set of the ballot,
+        weight (int | float): Weight of the ballot, defaults to 1.0.
+        voter_set (set[str] | frozenset[str]): Voter set of the ballot,
             defaults to frozenset().
 
     Attributes:
@@ -190,9 +190,9 @@ class RankBallot(Ballot):
         *,
         approvals: Iterable[str] | None = None,
         ranking: RankingLike = None,
-        scores: Optional[dict[str, Union[int, float]]] = None,
-        weight: Union[int, float] = 1.0,
-        voter_set: Union[set[str], frozenset[str]] = frozenset(),
+        scores: dict[str, int | float] | None = None,
+        weight: int | float = 1.0,
+        voter_set: set[str] | frozenset[str] = frozenset(),
     ):
         if approvals is not None or scores is not None:
             raise TypeError("Only one of approvals, ranking or scores can be provided.")
@@ -252,13 +252,13 @@ class ScoreBallot(Ballot):
     Class to handle ballots with scores. Strips whitespace from candidate names.
 
     Args:
-        scores (Optional[dict[str, Union[int, float]]]): Scores of candidates, defaults to None.
-        weight (Union[int, float]): Weight of the ballot, defaults to 1.0.
-        voter_set (Union[set[str], frozenset[str]]): Voter set of the ballot,
+        scores (dict[str, int | float] | None): Scores of candidates, defaults to None.
+        weight (int | float): Weight of the ballot, defaults to 1.0.
+        voter_set (set[str] | frozenset[str]): Voter set of the ballot,
             defaults to frozenset().
 
     Attributes:
-        scores (Optional[dict[str, float]]): Scores of candidates.
+        scores (dict[str, float] | None): Scores of candidates.
         weight (float): Weight of the ballot.
         voter_set (frozenset[str]): Voter set of the ballot.
 
@@ -273,9 +273,9 @@ class ScoreBallot(Ballot):
         *,
         approvals: Iterable[str] | None = None,
         ranking: RankingLike = None,
-        scores: Optional[dict[str, Union[int, float]]] = None,
-        weight: Union[int, float] = 1.0,
-        voter_set: Union[set[str], frozenset[str]] = frozenset(),
+        scores: dict[str, int | float] | None = None,
+        weight: int | float = 1.0,
+        voter_set: set[str] | frozenset[str] = frozenset(),
     ):
         if approvals is not None or ranking is not None:
             raise TypeError("Only one of approvals, ranking or scores can be provided.")
@@ -284,7 +284,7 @@ class ScoreBallot(Ballot):
 
         super().__init__(weight=weight, voter_set=voter_set)
 
-    def _validate_scores_candidates(self, scores: Optional[dict[str, Union[int, float]]]):
+    def _validate_scores_candidates(self, scores: dict[str, int | float] | None):
         if scores is not None:
             if "~" in scores:
                 raise ValueError(
@@ -294,8 +294,8 @@ class ScoreBallot(Ballot):
                 )
 
     def _convert_scores_to_float_strip_whitespace(
-        self, scores: Optional[dict[str, float]]
-    ) -> Optional[dict[str, float]]:
+        self, scores: dict[str, float] | None
+    ) -> dict[str, float] | None:
         if scores is None:
             return None
 
@@ -359,9 +359,9 @@ class ApprovalBallot(Ballot):
     def __init__(
         self,
         *,
-        approvals: Optional[Iterable[str]] = None,
+        approvals: Iterable[str] | None = None,
         ranking: RankingLike = None,
-        scores: Optional[dict[str, Union[int, float]]] = None,
+        scores: dict[str, int | float] | None = None,
         weight: float | int = 1.0,
         voter_set: set[str] | frozenset[str] = frozenset(),
     ):
@@ -373,7 +373,7 @@ class ApprovalBallot(Ballot):
 
         super().__init__(weight=weight, voter_set=voter_set)
 
-    def _validate_approval_candidates(self, approvals: Optional[Iterable[str]]) -> None:
+    def _validate_approval_candidates(self, approvals: Iterable[str] | None) -> None:
         if approvals is None:
             return
         if "~" in approvals:
@@ -384,7 +384,7 @@ class ApprovalBallot(Ballot):
             )
 
     def _strip_whitespace_approval_candidates(
-        self, approvals: Optional[Iterable[str]]
+        self, approvals: Iterable[str] | None
     ) -> frozenset[str] | None:
         if approvals is None:
             return None
