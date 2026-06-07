@@ -79,6 +79,3 @@ def test_get_candidates_received_votes():
         "B",
         "C",
     }
-
-
-test_unique_cands_validator()

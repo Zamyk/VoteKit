@@ -9,8 +9,8 @@ from typing import Sequence, cast
 import numpy as np
 import pandas as pd
 
-from votekit.ballot import ApprovalBallot, Ballot
-from votekit.pref_profile import ProfileError
+from votekit.ballot import ApprovalBallot
+from votekit.exceptions import ProfileError
 from votekit.pref_profile.utils import convert_row_to_approval_ballot
 
 
@@ -54,7 +54,7 @@ class ApprovalProfile:
     def __init__(
         self,
         *,
-        ballots: Sequence[Ballot] = tuple(),
+        ballots: Sequence[ApprovalBallot] = tuple(),
         candidates: Sequence[str] = tuple(),
         votes: np.ndarray | None = None,
         weights: np.ndarray | None = None,
@@ -63,13 +63,7 @@ class ApprovalProfile:
         if votes is None:
             self.candidates = tuple(candidates)
             self.candidates_cast = tuple(
-                sorted(
-                    {
-                        candidate
-                        for ballot in cast(Sequence[ApprovalBallot], ballots)
-                        for candidate in (ballot.approvals or ())
-                    }
-                )
+                sorted({candidate for ballot in ballots for candidate in (ballot.approvals or ())})
             )
 
             if self.candidates == tuple():
